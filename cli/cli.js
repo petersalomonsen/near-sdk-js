@@ -134,6 +134,10 @@ async function createWasmContract(qjscTarget, contractTarget) {
 
     // copying builder.c file to the build folder
     await executeCommand(`cp ${ORIGINAL_BUILDER_PATH} ${NEW_BUILDER_PATH}`);
+    let code_h = (await fs.readFile(qjscTarget)).toString();
+    code_h = code_h.replace('const uint8_t code', 'const uint8_t __attribute__ ((section ("JSBYTES"))) code');
+    await fs.writeFile(qjscTarget, code_h);
+    
     await executeCommand(`mv ${qjscTarget} build/code.h`);
 
     await executeCommand(`${CC} --target=wasm32-wasi -nostartfiles -Oz -flto ${DEFS} ${INCLUDES} ${SOURCES} ${LIBS} -Wl,--no-entry -Wl,--allow-undefined -Wl,-z,stack-size=${256 * 1024} -Wl,--lto-O3 -o ${contractTarget}`);
